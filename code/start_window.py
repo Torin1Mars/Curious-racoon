@@ -1,6 +1,7 @@
 import pygame
 from settings import screen_width, screen_height
 from support import CustomTimer, read_json_data
+from additional_windows import YesNoWindow
 
 class Start_window():
     def __init__(self, screen):
@@ -103,9 +104,9 @@ class Start_window():
         else:
             return 0
 
-    def run(self, events):
+    def run(self, mouse_pos, events):
         self.update()
-        self.botton_input_title.update(events)
+        self.botton_input_title.update(mouse_pos, events)
 
         if self.botton_input_title.user_data:
             self.user_data = self.botton_input_title.user_data
@@ -117,9 +118,8 @@ class Bottom_input_field:
     def __init__(self, screen: pygame.Surface, pos: pygame.math.Vector2):
         self.screen = screen
         self.pos = pos
-
         # Saving time when object was created
-        # "start_window", "overworld", "question_window"
+
         self.status = "start_window"
 
         # template surface
@@ -146,6 +146,7 @@ class Bottom_input_field:
                                 '.', '_', '-', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 
         self.input_text = ''
+        self.user_login:str = ""
         self.input_text_status = False
 
         # Additional timer for invisible status
@@ -153,6 +154,7 @@ class Bottom_input_field:
         self.image_status = False
 
         self.user_data: dict = {}
+        self.question_window = None
 
         #YesNoWindow(self.display_surface, (screen_width / 2, 300), (400, 300), (row_1, row_2))
 
@@ -160,6 +162,7 @@ class Bottom_input_field:
         self.user_data = {'user_login': login,
                           'user_data': data,
                           'user_status': user_status}
+
     def update_input(self, events):
         max_sight = 14
         for event in events:
@@ -177,36 +180,56 @@ class Bottom_input_field:
                     self.input_text += event.unicode
 
                 if event.key == pygame.K_RETURN and self.input_text:
+                    self.user_login = self.input_text
                     data = read_json_data(f"../code/users_data.json")
-                    login = self.input_text
-                    if login in data['users_logins']:
-                        self.__pack_user_data(login, data['users_logins'][login], f"existing")
+
+                    if self.user_login in data['users_logins']:
+                        row_1 = f"Welcome back"
+                        row_2 = f"{self.user_login}"
+                        row_3 = f"Would you like to load"
+                        row_4 = f" your game progress?"
+                        self.question_window = YesNoWindow(self.screen, (screen_width / 2, 300), (460, 350), (row_1, row_2, row_3, row_4))
+                        self.question_window.inscription_font = pygame.font.SysFont("Impact", 20, False, True)
+                        self.status = "question_window"
                     else:
-                        self.__pack_user_data(login, data['users_logins']['default_settings'], f"new")
-                    self.status = "overworld"
+                        self.__pack_user_data(self.user_login, data['users_logins']['default_settings'], f"new")
+                        self.status = "overworld"
 
             self.input_box_surf = self.input_font.render(f"{self.input_text}", False, 'white')
 
-
-    def update(self, events: pygame.event.Event):
+    def update(self, mouse_pos, events: pygame.event.Event):
         '''
         Timer is controlling image state in period of time which given by parameter when timer was initialised
         '''
         self.template_surface_timer.update()
+        if self.status == "start_window":
+            if self.title_external_status:
+                self.template_surface_timer.activate()
+                self.title_external_status = False
+                self.template_surface_state = True
+                self.input_text_status = True
 
-        if self.title_external_status:
-            self.template_surface_timer.activate()
-            self.title_external_status = False
-            self.template_surface_state = True
-            self.input_text_status = True
+            if self.template_surface_timer.get_status():
+                self.image_status = True
+            elif not self.template_surface_timer.get_status():
+                self.image_status = False
 
-        if self.template_surface_timer.get_status():
-            self.image_status = True
-        elif not self.template_surface_timer.get_status():
-            self.image_status = False
+            if self.input_text_status:
+                self.update_input(events)
 
-        if self.input_text_status:
-            self.update_input(events)
+        elif self.status == "question_window":
+            self.question_window.update(mouse_pos, events)
+            question_window_data = self.question_window.get_data()
+            if question_window_data:
+                if question_window_data == f"no":
+                    data = read_json_data(f"../code/users_data.json")
+                    self.__pack_user_data(self.user_login, data['users_logins']['default_settings'], f"new")
+                    self.status = "overworld"
+
+                elif question_window_data == f"ok":
+                    data = read_json_data(f"../code/users_data.json")
+                    self.__pack_user_data(self.user_login, data['users_logins'][self.user_login], f"existing")
+                    self.status = "overworld"
 
     def draw(self):
         if self.template_surface_state:
@@ -215,3 +238,6 @@ class Bottom_input_field:
             self.screen.blit(self.bottom_inscription_surf, self.bottom_inscription_rect)
         if self.input_text_status:
             self.screen.blit(self.input_box_surf, self.input_box_rect)
+
+        if self.status == "question_window":
+            self.question_window.draw()

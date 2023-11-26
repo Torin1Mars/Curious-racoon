@@ -3,6 +3,8 @@ from settings import screen_width, screen_height, game_difficulty
 from tiles import Static_centerTile, Static_centerDoubleTile, AnimatedStaticPict
 from buttons import StaticButton, StaticSoundButton
 from additional_windows import YesNoWindow
+from leaderboard import Leaderboard
+
 from support import CustomTimer
 
 class MenuWindow:
@@ -118,7 +120,8 @@ class MenuWindow:
             self.returning_data['data_from_menu'].append(self.images_data['bt_sound_code'])
 
         elif button_code == self.images_data['bt_cup_code']:
-            print("Pass")
+            self.internal_status = "leaderboard_window"
+            self.leaderboard = Leaderboard(self.display_surface, 25)
 
     def get_data(self):
         return self.returning_data
@@ -143,6 +146,12 @@ class MenuWindow:
             if settings_window_status != f"settings_window":
                 self.internal_status = "menu_window"
 
+        elif self.internal_status == "leaderboard_window":
+            self.leaderboard.update(mouse_pos, events)
+            data_from_leaderboard = self.leaderboard.get_data()
+            if data_from_leaderboard:
+                self.internal_status = "menu_window"
+
         elif self.internal_status == "exit_question":
             self.exit_question_window.update(mouse_pos, events)
 
@@ -162,7 +171,6 @@ class MenuWindow:
                     pygame.quit()
                     sys.exit()
 
-
     def draw(self):
         self.display_surface.blit(self.bg_image, self.bg_rect)
         if self.internal_status == "menu_window":
@@ -171,6 +179,9 @@ class MenuWindow:
 
         elif self.internal_status == "settings_window":
             self.settings_window.draw()
+
+        elif self.internal_status == "leaderboard_window":
+            self.leaderboard.draw()
 
         elif self.internal_status == "exit_question":
             for button in self.main_buttons_list:
@@ -377,7 +388,7 @@ class SlidingBarButton:
 
     def set_start_pos(self, settings_data: float) -> None:
         my_start_x = self.end_points['left_end_point'][0] + self.slide_distance * settings_data
-        self.slider_sprite.rect.x = my_start_x
+        self.slider_sprite.rect.centerx = my_start_x
 
     def get_data(self):
         max_length = self.end_points['right_end_point'][0] - self.end_points['left_end_point'][0]
@@ -490,7 +501,6 @@ class SlidingStepButton:
             self.button_sprite.rect.centerx = self.end_points['right_end_point'][0]
         else:
             self.button_sprite.rect.centerx = self.end_points['center_end_point'][0]
-
 
     def update(self, mouse_pos, events):
         if self.moving_status:

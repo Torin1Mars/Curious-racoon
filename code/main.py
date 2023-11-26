@@ -85,7 +85,7 @@ class Game:
 
     def create_overworld(self):
         self.overworld = Overworld(self.current_level, screen, self.create_level, self.change_game_level,\
-                                   self.total_game_time, self.game_data)
+                                   self.total_game_time, self.game_data, self.user_login)
         self.overworld.set_to_center_screen()
         self.status = 'overworld'
         self.my_sound.play_overworld_bg_music()
@@ -106,7 +106,7 @@ class Game:
     def run(self, events):
         mouse_pos = pygame.mouse.get_pos()
         if self.status == 'start_window':
-            self.start_window.run(events)
+            self.start_window.run(mouse_pos, events)
 
             if self.start_window.get_status() == 'overworld':
                 user_data = self.start_window.get_data()
@@ -132,6 +132,7 @@ class Game:
                     self.total_game_time += int(self.level.ui.level_time)
                 else:
                     self.total_game_time += int(self.level.ui.level_time)
+
                 self.create_overworld()
             self.check_menu(events)
 
@@ -151,7 +152,6 @@ class Game:
                 if data['data_from_settings']:
                     self.__apply_game_settings(data['data_from_settings'])
                     self.create_overworld()
-
 
 #######################################################################################################################
 #######################################################################################################################

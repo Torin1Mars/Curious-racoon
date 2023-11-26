@@ -77,7 +77,6 @@ class Player(pygame.sprite.Sprite):
 
     def animate(self):
         animation = self.animations[self.status]
-
         #Loop over animation frame index
         if self.saved_status != self.status:
             self.frame_index = 0
@@ -139,12 +138,12 @@ class Player(pygame.sprite.Sprite):
     # Character's moving
     def get_input(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.player_direction.x = -1
             self.right_facing_direction = False
             self.inertia_x += self.inertia_speed_x
 
-        elif keys[pygame.K_d]:
+        elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.player_direction.x = 1
             self.right_facing_direction = True
             self.inertia_x += self.inertia_speed_x
@@ -153,7 +152,7 @@ class Player(pygame.sprite.Sprite):
             self.player_direction.x = 0
             self.inertia_x = 0
 
-        if keys[pygame.K_SPACE] and self.player_on_ground:
+        if (keys[pygame.K_SPACE] or keys[pygame.K_UP]) and self.player_on_ground:
             self.player_jump()
             self.player_sound.play_effect_sound('jump_sound')
 
@@ -163,6 +162,7 @@ class Player(pygame.sprite.Sprite):
     def apply_gravity(self):
         self.player_direction.y += self.gravity
         self.collision_rect.y += self.player_direction.y
+
     def player_jump(self):
         self.player_direction.y = self.jump_height
 

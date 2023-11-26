@@ -30,7 +30,7 @@
             "game_settings":
             {
                "game_difficulty": "normal",
-                "bg_music_volume": 0.5,
+                "bg_music_volume": 0.6,
                 "effects_sound_volume": 0.5
             },
             "game_time": 5,

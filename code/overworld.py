@@ -6,7 +6,7 @@ from tiles import Static_centerTile, AnimatedNode
 from support import CustomTimer
 
 class Overworld:
-    def __init__(self, current_level, screen_surface, create_level, change_game_level, total_game_time, game_data):
+    def __init__(self, current_level, screen_surface, create_level, change_game_level, total_game_time, game_data, user_login):
 
         # setup
         self.display_surface = screen_surface
@@ -15,6 +15,7 @@ class Overworld:
         self.create_level = create_level
         self.change_game_level = change_game_level
 
+        self.user_login = user_login
         self.my_game_data = game_data
 
         # movement logic
@@ -49,6 +50,9 @@ class Overworld:
         self.create_nodes()
         self.create_icon()
 
+        self.user_login_inscription = pygame.sprite.Group()
+        self.create_user_login()
+
     def set_to_center_screen(self):
         if not self.current_level == 'level_1':
             current_level_index = list(self.my_game_data).index(self.current_level)
@@ -67,6 +71,18 @@ class Overworld:
                 node_object = Node(node_data, 'locked', self.speed, self.display_surface)
 
             self.nodes_list.append(node_object)
+
+    def create_user_login(self):
+        user_icon_surf = pygame.image.load('../graphics/menu_window/User_icon.png').convert_alpha()
+        user_icon_sprite = Static_centerTile(user_icon_surf, (50, screen_height-50))
+
+        user_login_font = pygame.font.SysFont("Impact", 32, False, True)
+        user_login_surf = user_login_font.render(f"{self.user_login}", 1, "black")
+        user_login_sprite = Static_centerTile(user_login_surf, (user_icon_sprite.rect.center))
+        user_login_sprite.rect.left = user_icon_sprite.rect.right + 5
+        user_login_sprite.rect.bottom = user_icon_sprite.rect.bottom
+
+        self.user_login_inscription.add(user_icon_sprite, user_login_sprite)
 
     def update_nodes_stars(self):
         self.my_stars_score.update_score()
@@ -88,7 +104,7 @@ class Overworld:
         self.icon.add(icon_sprite)
 
     def create_bottom_inscription(self):
-        text = "FOR CHOOSE PRESS SPASE"
+        text = "FOR CHOOSE PRESS SPACE"
         pos = [screen_width/2, screen_height-30]
         text_font = pygame.font.SysFont("Impact", 30, False, True)
         self.bottom_inscription_surf = text_font.render(text, 1, "black")
@@ -207,9 +223,10 @@ class Overworld:
 
         #self.draw_paths()
 
-        # draw my score info
+        # draw additional info
         self.my_stars_score.draw()
         self.my_time_score.draw()
+        self.user_login_inscription.draw(self.display_surface)
 #######################################################################################################################
 
 class Icon (pygame.sprite.Sprite):
@@ -365,9 +382,9 @@ class TimeScore:
 
     def reformat_showing_time(self):
         if self.my_time > 60:
-            minuts = self.my_time // 60
-            secounds = (self.my_time % 60)*0.01
-            self.showing_time = minuts+secounds
+            minutes = self.my_time // 60
+            second = self.my_time % 60 * 0.01
+            self.showing_time = round((minutes + second), 2)
         else:
             self.showing_time = self.my_time
 

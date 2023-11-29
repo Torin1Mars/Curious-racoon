@@ -118,8 +118,14 @@ class Game:
                 self.create_overworld()
 
         elif self.status == 'overworld':
+            self.overworld.update(mouse_pos, events)
             self.overworld.run()
             self.check_menu(events)
+
+            if self.overworld.external_status == "menu_window":
+                self.menu_window = MenuWindow(screen, self.change_status, self.my_sound.mute_status, self.user_settings)
+                self.menu_window.previous_status = self.status
+                self.status = 'menu_window'
 
         elif self.status == 'level':
             self.level.run(events)

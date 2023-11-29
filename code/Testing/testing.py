@@ -1,37 +1,33 @@
-import pygame
-import pytmx
+from random import randint
 
-from settings import*
+'''test_list :list = []
+for i in range(25):
+    k = randint(5,60)
+    i += 1
+    test_list.append(k)'''
 
-class TiledMap :
-    def __init__(self, filename):
-        self.filename = filename
-        tmx_data = pytmx.load_pygame(self.filename, pixelalpha = True)
-        self.width = tmx_data.width*tmx_data.tilewidth
-        self.height =(tmx_data.height+1)*tmx_data.tilewidth
+#test_list = [randint(5, 60) for i in range(8)]
 
-        self.tmx_map = tmx_data
+test_list = [8, 11, 6, 5, 3]
+def quick_sort(list):
+    if len(list) < 2:
+        return list
 
-    def render(self):
-        tmx_layers = self.tmx_map.visible_layers
+    low, same, high = [], [], []
+    pivot = list[randint(0, len(list)-1)]
 
-        for layer in tmx_layers:
-            if layer.name == "test":
-                for x, y, gid, in layer:
-                    tile = self.tmx_map.get_tile_image_by_gid(gid)
-                    if (tile != None):
-                        print(gid)
-                        print(tile)
-                        print (type(tile))
+    for item in list:
+        if item == pivot:
+            same.append(item)
+        elif item < pivot:
+            low.append(item)
+        elif item > pivot:
+            high.append(item)
 
-    def make_map (self):
-        temp_surface = pygame.Surface((self.width,self.height))
-        self.render()
-        return temp_surface
+    return quick_sort(low)+same+quick_sort(high)
 
+if __name__ == "__main__":
+    sorted_list = quick_sort(test_list)
+    print(sorted_list)
 
-'''pygame.init()
-screen = pygame.display.set_mode((800,600))
-tile = TiledMap('../levels/level_data/level_0.tmx')
-tile.render(screen)'''
 

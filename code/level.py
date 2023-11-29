@@ -83,48 +83,56 @@ class Level:
             if key == f"terrain":
                 # pytmx loader
                 self.pytmx_terrain_sprites = self.create_Pytmx_tile_group(tmx_path, 'terrain_tiles')
-                self.my_map_dict.update({'terrain_tiles': self.pytmx_terrain_sprites})
+
+                self.my_map_dict[key] = self.pytmx_terrain_sprites
 
             elif key == f"crates":
                 # pytmx loader
                 self.pytmx_crates_sprites = self.create_Pytmx_tile_group(tmx_path, 'crates')
-                self.my_map_dict.update({'crates': self.pytmx_crates_sprites})
+
+                self.my_map_dict[key] = self.pytmx_crates_sprites
 
             elif key == f"fence":
                 # pytmx loader
                 self.pytmx_fence_sprites = self.create_Pytmx_tile_group(tmx_path, 'fence')
-                self.my_map_dict.update({'fence': self.pytmx_fence_sprites})
+
+                self.my_map_dict[key] = self.pytmx_fence_sprites
 
             elif key == f"water":
                 # pytmx loader
                 self.pytmx_water_sprites = self.create_Pytmx_tile_group(tmx_path, 'water')
-                self.my_map_dict.update({'water': self.pytmx_water_sprites})
+
+                self.my_map_dict[key] = self.pytmx_water_sprites
 
             elif key == f"decorations":
                 # pytmx loader
                 self.pytmx_decorations_sprites = self.create_Pytmx_tile_group(tmx_path, 'decorations')
-                self.my_map_dict.update({'decorations': self.pytmx_decorations_sprites})
+
+                self.my_map_dict[key] = self.pytmx_decorations_sprites
 
             elif key == f"snow":
                 # pytmx loader
                 self.pytmx_snow_sprites = self.create_Pytmx_tile_group(tmx_path, 'snow')
-                self.my_map_dict.update({'snow': self.pytmx_snow_sprites})
+
+                self.my_map_dict[key] = self.pytmx_snow_sprites
 
             elif key == f"forest_trees":
                 # pytmx loader
                 self.pytmx_forest_trees_sprites = self.create_Pytmx_tile_group(tmx_path, 'forest_trees')
-                self.my_map_dict.update({'forest_trees': self.pytmx_forest_trees_sprites})
+
+                self.my_map_dict[key] = self.pytmx_forest_trees_sprites
 
             elif key == f"cactus":
                 # pytmx loader
                 self.pytmx_cactus_sprites = self.create_Pytmx_tile_group(tmx_path, 'cactus')
-                self.my_map_dict.update({'cactus': self.pytmx_cactus_sprites})
 
+                self.my_map_dict[key] = self.pytmx_cactus_sprites
 
             elif key == f"grass":
                 # pytmx loader
                 self.pytmx_grass_sprites = self.create_Pytmx_tile_group(tmx_path, 'grass')
-                self.my_map_dict.update({'grass': self.pytmx_grass_sprites})
+
+                self.my_map_dict[key] = self.pytmx_grass_sprites
 
             ############################################
             # Pygame loader
@@ -134,31 +142,36 @@ class Level:
                 # pygame loader
                 coin_layout = import_csv_layout(self.current_level['coins'])
                 self.coins_sprites = self.create_tile_group(coin_layout, 'coins')
-                self.my_map_dict.update({'coins': self.coins_sprites})
+
+                self.my_map_dict[key] = self.coins_sprites
 
             elif key == f"fg_palms":
                 # pygame loader
                 fg_palms_layout = import_csv_layout(self.current_level['fg_palms'])
                 self.fg_palms_sprites = self.create_tile_group(fg_palms_layout, 'fg_palms')
-                self.my_map_dict.update({'fg_palms': self.fg_palms_sprites})
+
+                self.my_map_dict[key] = self.fg_palms_sprites
 
             elif key == f"bg_palms":
                 # pygame loader
                 bg_palms_layout = import_csv_layout(self.current_level['bg_palms'])
                 self.bg_palms_sprites = self.create_tile_group(bg_palms_layout, 'bg_palms')
-                self.my_map_dict.update({'bg_palms': self.bg_palms_sprites})
+
+                self.my_map_dict[key] = self.bg_palms_sprites
 
             elif key == f"enemies":
                 # pygame loader
                 enemies_layout = import_csv_layout(self.current_level['enemies'])
                 self.enemies_sprites = self.create_tile_group(enemies_layout, 'enemies')
-                self.my_map_dict.update({'enemies': self.enemies_sprites})
+
+                self.my_map_dict[key] = self.enemies_sprites
 
             elif key == f"constrains":
                 # pygame loader
                 constrains_layout = import_csv_layout(self.current_level['constrains'])
                 self.constrains_sprites = self.create_tile_group(constrains_layout, 'constrains')
-                self.my_map_dict.update({'constrains': self.constrains_sprites})
+
+                self.my_map_dict[key] = self.constrains_sprites
 
     def create_Pytmx_tile_group(self, pytmx_level_path, tiles_name) -> pygame.sprite.Group:
         sprite_group = pygame.sprite.Group()

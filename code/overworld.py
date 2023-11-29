@@ -5,9 +5,10 @@ from decoration import Clouds
 from tiles import Static_centerTile, AnimatedNode
 from support import CustomTimer
 
+from buttons import StaticButton
+
 class Overworld:
     def __init__(self, current_level, screen_surface, create_level, change_game_level, total_game_time, game_data, user_login):
-
         # setup
         self.display_surface = screen_surface
 
@@ -17,6 +18,9 @@ class Overworld:
 
         self.user_login = user_login
         self.my_game_data = game_data
+
+        # overworld or menu_window
+        self.external_status = "overworld"
 
         # movement logic
         self.moving = False
@@ -53,6 +57,22 @@ class Overworld:
         self.user_login_inscription = pygame.sprite.Group()
         self.create_user_login()
 
+        self.static_buttons_data: dict = {'menu_button': {'bt_menu_1': '../graphics/overworld/bt_menu_1.png',
+                                                          'bt_menu_2': '../graphics/overworld/bt_menu_2.png',
+                                                          'bt_menu_code': 1}
+                                          }
+        self.static_buttons: list = []
+        self._create_static_buttons()
+
+    def _create_static_buttons(self):
+        button_data = self.static_buttons_data['menu_button']
+        surface_1 = pygame.image.load(button_data['bt_menu_1']).convert_alpha()
+        surface_2 = pygame.image.load(button_data['bt_menu_2']).convert_alpha()
+        button_code = button_data['bt_menu_code']
+
+        menu_button = StaticButton((screen_width-70, screen_height-50), (surface_1, surface_2), self.display_surface, button_code)
+        self.static_buttons.append(menu_button)
+
     def set_to_center_screen(self):
         if not self.current_level == 'level_1':
             current_level_index = list(self.my_game_data).index(self.current_level)
@@ -86,10 +106,8 @@ class Overworld:
 
     def update_nodes_stars(self):
         self.my_stars_score.update_score()
-
         for node in self.nodes_list:
             node.update_stars()
-
     def draw_paths(self):
         if self.max_level > 0:
             points = [node['node_pos'] for index, node in enumerate(self.my_game_data.values()) if index <= self.max_level]
@@ -151,6 +169,23 @@ class Overworld:
         my_target_pos = pygame.math.Vector2(target_pos)
         return (my_target_pos - my_current_pos).normalize()
 
+    def waiting_timer(self):
+        waiting_seconds = 2
+        if self.current_time + waiting_seconds < pygame.time.get_ticks()/1000:
+            self.timer_status = True
+            self.bottom_inscription_timer.activate()
+
+    def _static_buttons_handler(self, button_code):
+        if button_code == self.static_buttons_data['menu_button']['bt_menu_code']:
+            self.external_status = "menu_window"
+
+    def update_static_buttons(self, mouse_pos, events):
+        for button in self.static_buttons:
+            button.update(mouse_pos, events)
+            button_data = button.check_pressed()
+            if button_data:
+                self._static_buttons_handler(button.button_code)
+
     def update_icon_pos(self):
         my_icon = self.icon.sprite
         if self.moving and self.move_direction:
@@ -190,38 +225,42 @@ class Overworld:
                     self.move_direction = pygame.math.Vector2(0, 0)
                 self.overworld_shift_x = 0
 
-    def waiting_timer(self):
-        waiting_seconds = 2
-        if self.current_time + waiting_seconds < pygame.time.get_ticks()/1000:
-            self.timer_status = True
-            self.bottom_inscription_timer.activate()
+    def update(self, mouse_pos, events):
+        self.input()
+        # time management
+        if not self.timer_status:
+            self.waiting_timer()
+
+        # update nodes
+        for node in self.nodes_list:
+            node.update(self.overworld_shift_x)
+
+        # updating icon
+        self.update_icon_pos()
+        self.icon.update()
+
+        # updating bottom_inscription
+        self.bottom_inscription_timer.update()
+
+        # updating static buttons
+        self.update_static_buttons(mouse_pos, events)
 
     def run(self):
         # decorations
         self.display_surface.blit(self.bg_image, (0, 0))
         self.clouds.draw(self.display_surface, 0)
 
-        self.update_icon_pos()
-
-        # update nodes
         for node in self.nodes_list:
-            node.update(self.overworld_shift_x)
+            node.draw()
 
-        # updating icons
-        self.icon.update()
         self.icon.draw(self.display_surface)
 
-        # time managment
-        if not self.timer_status:
-            self.waiting_timer()
-        self.input()
-
-        # updating bottom_inscription
-        self.bottom_inscription_timer.update()
         if self.bottom_inscription_timer.get_status():
             self.display_surface.blit(self.bottom_inscription_surf, self.bottom_inscription_rect)
-
         #self.draw_paths()
+
+        for botton in self.static_buttons:
+            botton.draw()
 
         # draw additional info
         self.my_stars_score.draw()
@@ -318,10 +357,11 @@ class Node:
             sprite.rect.x += distance
         self.detection_zone.x += distance
 
-
     def update(self, overworld_shift_x):
         self.main_group.update(overworld_shift_x)
         self.detection_zone.centerx += overworld_shift_x
+
+    def draw(self):
         self.main_group.draw(self.screen)
 
 #######################################################################################################################

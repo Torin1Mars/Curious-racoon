@@ -1,6 +1,6 @@
 import pygame, sys
 import settings
-from map import TiledMap
+from testing import TiledMap
 
 pygame.init()
 screen = pygame.display.set_mode((settings.screen_width, settings.screen_height),pygame.SRCALPHA)

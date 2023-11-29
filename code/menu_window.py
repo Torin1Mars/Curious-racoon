@@ -170,7 +170,6 @@ class MenuWindow:
                     self.internal_status = "menu_window"
                     pygame.quit()
                     sys.exit()
-
     def draw(self):
         self.display_surface.blit(self.bg_image, self.bg_rect)
         if self.internal_status == "menu_window":

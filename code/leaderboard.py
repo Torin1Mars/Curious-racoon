@@ -6,9 +6,8 @@ from support import read_json_data
 import random
 
 class Leaderboard:
-    def __init__(self, screen: pygame.surface.Surface, leader_table_data):
+    def __init__(self, screen: pygame.surface.Surface):
         self.display_surface = screen
-        self.leader_data = leader_table_data
 
         self.returning_data = None
 
@@ -48,25 +47,11 @@ class Leaderboard:
         button_ok = StaticButton(pos, (temp_surf_1, temp_surf_2), self.display_surface, 1)
         self.buttons_list.append(button_ok)
 
-    def __sort_leader_table(self, leader_table):
-        def get_sorted_key(item):
-            my_item = item[1]
-            time = my_item['Total_time']
-            stars = my_item['Total_stars']
-            return time, -stars
-
-        sorted_table = {}
-        sorted_list = sorted(leader_table.items(), key=get_sorted_key, reverse=False)
-        for key, value in sorted_list:
-            sorted_table[key] = value
-
-        return sorted_table
-
     def _make_leader_table(self):
         my_data = read_json_data('../code/leader_table.json')
         leader_table: dict = my_data['leaderTable']
 
-        self.sorted_table = self.__sort_leader_table(leader_table)
+        self.sorted_table = sort_leader_table(leader_table)
 
     def _render_leader_table(self):
         center_screen_x = screen_width/2
@@ -139,3 +124,18 @@ class Leaderboard:
 
         for button in self.buttons_list:
             button.draw()
+
+
+def sort_leader_table(leader_table):
+    def get_sorted_key(item):
+        my_item = item[1]
+        time = my_item['Total_time']
+        stars = my_item['Total_stars']
+        return time, -stars
+
+    sorted_table = {}
+    sorted_list = sorted(leader_table.items(), key=get_sorted_key, reverse=False)
+    for key, value in sorted_list:
+        sorted_table[key] = value
+
+    return sorted_table

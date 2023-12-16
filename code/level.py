@@ -1,11 +1,11 @@
 import pygame
 import settings
 
-from support import import_csv_layout, import_cut_graphics, import_pytmx_surface
+from support import import_csv_layout, import_pytmx_surface
 from tiles import Tile, StaticTile, Static_pytmxTile, \
                 Water_pytmxTile, AnimatedCoin, AnimatedPalm, Static_snowTile, Static_grassTile
 
-from enemy import Enemy
+from enemy import Enemy, EnemyStaticBird, EnemyFlyingBird
 from decoration import Background, Clouds
 
 from player import Player
@@ -15,14 +15,14 @@ from additional_windows import PauseWindow
 from ui import UI
 
 class Level:
-    def __init__(self, current_level, screen, sound, game_difficulty):
+    def __init__(self, current_level, screen, sound, game_mode):
         # general setup
         self.my_map_dict = None
         self.display_surface = screen
         self.world_shift_x = 0
 
         # level settings
-        self.game_difficulty = game_difficulty
+        self.game_mode = game_mode
         self.current_level = current_level
         self.level_width = self.__get_level_width()
 
@@ -35,6 +35,9 @@ class Level:
         self.goal = pygame.sprite.GroupSingle()
         self.enemy_effect = pygame.sprite.Group()
         self.dust_sprites = pygame.sprite.Group()
+
+        # audio
+        self.my_sound = sound
 
         # load_level_data
         self.load_level()
@@ -50,9 +53,6 @@ class Level:
         # max time level (sec)
         self.max_level_time = 180
         self.ui = UI(self.display_surface, self.max_level_time)
-
-        # audio
-        self.level_sound = sound
 
         # player settings
         self.player = pygame.sprite.GroupSingle()
@@ -166,6 +166,20 @@ class Level:
 
                 self.my_map_dict[key] = self.enemies_sprites
 
+            elif key == f"static_bird":
+                # pygame loader
+                static_bird_layout = import_csv_layout(self.current_level['static_bird'])
+                self.static_bird_sprites = self.create_tile_group(static_bird_layout, 'static_bird')
+
+                self.my_map_dict[key] = self.static_bird_sprites
+
+            elif key == f"flying_bird":
+                # pygame loader
+                flying_bird_layout = import_csv_layout(self.current_level['flying_bird'])
+                self.flying_bird_sprites = self.create_tile_group(flying_bird_layout, 'flying_bird')
+
+                self.my_map_dict[key] = self.flying_bird_sprites
+
             elif key == f"constrains":
                 # pygame loader
                 constrains_layout = import_csv_layout(self.current_level['constrains'])
@@ -240,12 +254,6 @@ class Level:
                     x = cell_index * settings.tile_size
                     y = row_index * settings.tile_size
 
-                    if type == 'grass':
-                        grass_tile_list = import_cut_graphics(
-                            '../graphics/decoration/grass/grass.png')
-                        grass_surface = grass_tile_list[int(cell)]
-                        sprite = StaticTile(settings.tile_size, x, y, grass_surface)
-
                     if type == 'coins':
                         if cell == "0":
                             sprite = AnimatedCoin(settings.tile_size, x, y,
@@ -272,10 +280,17 @@ class Level:
                                               offset_y=60)
 
                     if type == 'enemies':
-                        sprite = Enemy(settings.tile_size, x, y,self.game_difficulty, offset_y=30)
+                        sprite = Enemy(settings.tile_size, x, y, self.game_mode, offset_y=30)
 
                     if type == 'constrains':
                         sprite = Tile(settings.tile_size, x, y)
+
+                    if type == 'static_bird':
+                        sprite = EnemyStaticBird(self.display_surface, (x,y), self.game_mode)
+
+                    if type == 'flying_bird':
+                        y += settings.tile_size
+                        sprite = EnemyFlyingBird(self.display_surface, (x, y), self.game_mode, self.my_sound)
 
                     sprite_group.add(sprite)
 
@@ -292,7 +307,7 @@ class Level:
                     y = row_index * settings.tile_size
                     if cell == '1':
                         sprite = Player((x, y), self.display_surface, self.create_jump_particles, self.change_health,\
-                                        self.level_background.make_swipe_x, self.level_sound, self.game_difficulty)
+                                        self.level_background.make_swipe_x, self.my_sound, self.game_mode)
                         self.player.add(sprite)
 
                     if cell == '0':
@@ -317,8 +332,8 @@ class Level:
                 upper point sets the up point of our overall dimension
                 lower_point sets the low point of our overall dimension'''
 
-                my_player_overall_height = {'upper_point': my_player.collision_rect.top + 1,
-                                            'lower_point': my_player.collision_rect.bottom - 1}
+                my_player_overall_height = {'upper_point': my_player.collision_rect.top,
+                                            'lower_point': my_player.collision_rect.bottom-1}
                 height_colliding = False
 
                 if my_player_overall_height['upper_point'] in range(int(sprite.rect.top),
@@ -348,12 +363,12 @@ class Level:
 
                 # Here we are checking case when player speed is 0 but world shift parameter isn't zero
                 elif self.world_shift_x < 0:  # This means that we're moving to the right
-                    my_player.collision_rect.right = sprite.rect.left - 3  # -3 is a parameter to compensation incorrect size of animation images
+                    my_player.collision_rect.centerx -= 2  # -3 is a parameter to compensation incorrect size of animation images
                     my_player.player_on_left = False
                     my_player.player_on_right = True
 
                 elif self.world_shift_x > 0:  # This means that we're moving to the left
-                    my_player.collision_rect.left = sprite.rect.right + 3  # +3 is a parameter to compensation incorrect size of animation images
+                    my_player.collision_rect.centerx += 2  # +3 is a parameter to compensation incorrect size of animation images
                     my_player.player_on_left = True
                     my_player.player_on_right = False
 
@@ -368,6 +383,8 @@ class Level:
                         self.player.sprite.collision_rect.centerx = self.player_previous_x
 
                 self.player_previous_x = self.player.sprite.collision_rect.centerx
+
+
 
     def vertical_movement_collision(self):
         my_player = self.player.sprite
@@ -387,7 +404,7 @@ class Level:
 
 
                 elif my_player.player_direction.y < 0:  # In case when jumping
-                    my_player.collision_rect.top = sprite.rect.bottom
+                    my_player.collision_rect.top = sprite.rect.bottom+2
                     my_player.player_direction.y = 0
                     my_player.player_on_ceiling = True
 
@@ -447,14 +464,14 @@ class Level:
         direction_x = my_player.player_direction.x
 
         if my_player_x < settings.tile_size * 5 and direction_x < 0:
-            self.world_shift_x = self.game_difficulty
+            self.world_shift_x = settings.player_speed
             my_player.speed = 0
         elif my_player_x > settings.screen_width - settings.tile_size * 5 and direction_x > 0:
-            self.world_shift_x = -self.game_difficulty
+            self.world_shift_x = -settings.player_speed
             my_player.speed = 0
         else:
             self.world_shift_x = 0
-            my_player.speed = self.game_difficulty
+            my_player.speed = settings.player_speed
 
     def check_win(self):
         def calculate_score():
@@ -473,7 +490,7 @@ class Level:
     def check_coins_collisions(self):
         collided_coins = pygame.sprite.spritecollide(self.player.sprite, self.coins_sprites, True)
         if collided_coins:
-            self.level_sound.play_effect_sound("coin_sound")
+            self.my_sound.play_effect_sound("coin_sound")
             for coin in collided_coins:
                 self.change_coins(coin.value)
 
@@ -488,13 +505,77 @@ class Level:
                 player_bottom = my_player.collision_rect.bottom
 
                 if int(self.player.sprite.player_direction.y) >= 0 and enemy_top < player_bottom < enemy_center:
-                    self.level_sound.play_effect_sound("stomp_sound")
+                    self.my_sound.play_effect_sound("stomp_sound")
                     self.player.sprite.player_direction.y = -10
                     explosion_sprite = ParticleEffect(enemy_sprite.rect.center, "enemy_collision")
                     self.enemy_effect.add(explosion_sprite)
                     enemy_sprite.kill()
                 else:
                     self.player.sprite.get_damage()
+
+        if not self.enemies_sprites:
+            self.my_map_dict.pop("enemies")
+
+    def check_enemy_static_bird_collisions(self):
+        my_player = self.player.sprite
+
+        for bird in self.static_bird_sprites:
+            if not bird.character_status == 'hit':
+                for tile in self.pytmx_terrain_sprites:
+                    if bird.rect.colliderect(tile.rect):
+                        bird.set_target_to_center()
+
+            if my_player.collision_rect.colliderect(bird.rect) and not my_player.invincible:
+                bird_center = bird.rect.centery
+                bird_top = bird.rect.top
+                player_bottom = my_player.collision_rect.bottom
+
+                if not bird.character_status == 'hit':
+                    if bird_top < player_bottom < bird_center:
+                        self.my_sound.play_effect_sound("stomp_sound")
+                        self.player.sprite.player_direction.y = -10
+                        explosion_sprite = ParticleEffect(bird.rect.center, "enemy_collision")
+                        self.enemy_effect.add(explosion_sprite)
+                        bird.set_hit()
+
+                    else:
+                        self.player.sprite.get_damage()
+
+            if bird.rect.centery > settings.screen_height+20:
+                bird.kill()
+
+        if not self.static_bird_sprites:
+            self.my_map_dict.pop("static_bird")
+
+    def check_enemy_flying_bird_collisions(self):
+        my_player = self.player.sprite
+        for bird in self.flying_bird_sprites:
+            if bird.trap_rect.collidepoint(my_player.rect.center):
+                bird.set_active(my_player.rect.centerx)
+
+        for bird in self.flying_bird_sprites:
+            if bird.internal_status == "active":
+                if my_player.collision_rect.colliderect(bird.rect) and not my_player.invincible:
+                    bird_center = bird.rect.centery
+                    bird_top = bird.rect.top
+                    player_bottom = my_player.collision_rect.bottom
+
+                    if not bird.character_status == 'hit':
+                        if bird_top < player_bottom < bird_center:
+                            self.my_sound.play_effect_sound("stomp_sound")
+                            self.player.sprite.player_direction.y = -10
+                            explosion_sprite = ParticleEffect(bird.rect.center, "enemy_collision")
+                            self.enemy_effect.add(explosion_sprite)
+                            bird.set_hit()
+
+                        else:
+                            self.player.sprite.get_damage()
+
+            if bird.rect.centery > settings.screen_height+20:
+                bird.kill()
+
+        if not self.flying_bird_sprites:
+            self.my_map_dict.pop("flying_bird")
 
     def check_pause(self, events):
         for event in events:
@@ -546,6 +627,8 @@ class Level:
         self.level_background.update()
         self.level_background.draw()
 
+        # clouds sprites
+        self.clouds.update(self.world_shift_x)
         self.clouds.draw(self.display_surface, self.world_shift_x)
 
         # decorations_sprites
@@ -573,10 +656,11 @@ class Level:
         self.coins_sprites.update(self.world_shift_x)
 
         # enemies_sprites
-        self.constrains_sprites.update(self.world_shift_x)
-        self.enemies_sprites.update(self.world_shift_x)
-        self.check_enemy_constrains_collision()
-        self.enemies_sprites.draw(self.display_surface)
+        if f"enemies" in self.my_map_dict:
+            self.constrains_sprites.update(self.world_shift_x)
+            self.enemies_sprites.update(self.world_shift_x)
+            self.check_enemy_constrains_collision()
+            self.enemies_sprites.draw(self.display_surface)
 
         # create terrain_sprites
         self.pytmx_terrain_sprites.draw(self.display_surface)
@@ -586,8 +670,17 @@ class Level:
         self.pytmx_crates_sprites.draw(self.display_surface)
         self.pytmx_crates_sprites.update(self.world_shift_x)
 
-        # clouds sprites
-        self.clouds.update(self.world_shift_x)
+        # static birds sprites
+        if f"static_bird" in self.my_map_dict:
+            self.static_bird_sprites.update(self.world_shift_x)
+            self.check_enemy_static_bird_collisions()
+            self.static_bird_sprites.draw(self.display_surface)
+
+        # flying birds sprites
+        if f"flying_bird" in self.my_map_dict:
+            self.flying_bird_sprites.update(self.world_shift_x)
+            self.check_enemy_flying_bird_collisions()
+            self.flying_bird_sprites.draw(self.display_surface)
 
         # player sprite
         self.player.update()

@@ -19,9 +19,6 @@ class Overworld:
         self.user_login = user_login
         self.my_game_data = game_data
 
-        # overworld or menu_window
-        self.external_status = "overworld"
-
         # movement logic
         self.moving = False
         self.move_direction = pygame.math.Vector2(0, 0)
@@ -63,6 +60,7 @@ class Overworld:
                                           }
         self.static_buttons: list = []
         self._create_static_buttons()
+        self.pressed_buttons_codes:list = []
 
     def _create_static_buttons(self):
         button_data = self.static_buttons_data['menu_button']
@@ -133,7 +131,8 @@ class Overworld:
         current_level_index: int = list(self.my_game_data).index(self.current_level)
 
         if not self.moving and self.timer_status:
-            if keys[pygame.K_d] and not self.current_level == len(self.nodes_list):
+            last_level:bool = True if self.current_level == len(self.nodes_list) else False
+            if (keys[pygame.K_d] or keys[pygame.K_RIGHT]) and not last_level:
                 target_node_status = self.nodes_list[current_level_index+1].status
                 if target_node_status == f"available":
                     current_pos = self.nodes_list[current_level_index].detection_zone.center
@@ -148,7 +147,7 @@ class Overworld:
                     #method from Game class
                     self.change_game_level(self.current_level)
 
-            elif keys[pygame.K_a] and current_level_index > 0:
+            elif (keys[pygame.K_a] or keys[pygame.K_LEFT]) and current_level_index > 0:
                 current_pos = self.nodes_list[current_level_index].detection_zone.center
                 target_pos = self.nodes_list[current_level_index - 1].detection_zone.center
                 self.move_direction = self.get_movement_data(current_pos, target_pos)
@@ -177,7 +176,7 @@ class Overworld:
 
     def _static_buttons_handler(self, button_code):
         if button_code == self.static_buttons_data['menu_button']['bt_menu_code']:
-            self.external_status = "menu_window"
+            self.pressed_buttons_codes.append(self.static_buttons_data['menu_button']['bt_menu_code'])
 
     def update_static_buttons(self, mouse_pos, events):
         for button in self.static_buttons:
@@ -189,9 +188,7 @@ class Overworld:
     def update_icon_pos(self):
         my_icon = self.icon.sprite
         if self.moving and self.move_direction:
-
             current_level_index = list(self.my_game_data).index(self.current_level)
-
             levels_keys = list(self.my_game_data)
 
             first_level_posx = self.my_game_data[levels_keys[0]]['node_pos'][0]
@@ -215,7 +212,7 @@ class Overworld:
                     target_pos = self.nodes_list[current_level_index].detection_zone.center
                     self.move_direction = self.get_movement_data(current_pos, target_pos)
                     my_icon.pos.y += self.move_direction.y * self.speed
-                    self.overworld_shift_x = self.move_direction.x * self.speed * -1
+                    self.overworld_shift_x = self.move_direction.x * self.speed*-1
 
             else:
                 my_icon.pos += self.move_direction * self.speed
@@ -226,7 +223,9 @@ class Overworld:
                 self.overworld_shift_x = 0
 
     def update(self, mouse_pos, events):
+        self.pressed_buttons_codes.clear()
         self.input()
+
         # time management
         if not self.timer_status:
             self.waiting_timer()

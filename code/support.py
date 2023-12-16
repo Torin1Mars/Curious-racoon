@@ -1,3 +1,4 @@
+import datetime
 from csv import reader
 import json
 
@@ -7,6 +8,8 @@ from os import walk
 
 import pytmx
 import pygame
+
+from datetime import datetime
 
 
 # List of supporting functions
@@ -46,6 +49,7 @@ def import_pytmx_surface(tmx_data_path: str, layer_name: str) -> list:
                     result_surface = [surface, pos]
                     surfaces_list.append(result_surface)
             return surfaces_list
+
 def import_folder(path):
     surface_list = []
     for _, __, image_files in walk(path):
@@ -60,6 +64,53 @@ def read_json_data(path):
     with open(path, 'r') as file:
         data = json.load(file)
         return data
+
+def update_json_data(new_data, path):
+    with open(path, 'w') as file:
+        json.dump(new_data, file, indent=4)
+
+def save_game(user_login, user_data):
+    def sort_users_data(users_data: dict)->dict:
+        def get_sorted_key(item:dict):
+            this_item = item[1]
+            this_date = this_item['date']
+            date = datetime.strptime(this_date, "%d/%m/%Y %H:%M:%S")
+            return date
+
+        old_users_data = users_data
+        sorted_data_list = sorted(old_users_data.items(), key=get_sorted_key, reverse=False)
+        return sorted_data_list
+
+    my_user_data = user_data
+    now = datetime.now()
+    current_time = now.strftime("%d/%m/%Y %H:%M:%S")
+    my_user_data['date'] = current_time
+    all_users_data = read_json_data(f"../code/users_data.json")
+
+    if user_login in all_users_data["users_logins"]:
+        all_users_data["users_logins"][user_login] = my_user_data
+        update_json_data(all_users_data, f"../code/users_data.json")
+
+    else:
+        sorted_data_list = sort_users_data(all_users_data["users_logins"])
+        all_users_data["users_logins"].clear()
+        if len(sorted_data_list) > 10:
+            # we definitely need check if last instance is a default
+            # and prevent deleting default login
+            last_instance_key = sorted_data_list[-1][0]
+            if last_instance_key == f"default":
+                sorted_data_list.pop(-2)
+            else:
+                sorted_data_list.pop(-1)
+
+        for key, value in sorted_data_list:
+            all_users_data["users_logins"][key] = value
+
+        all_users_data["users_logins"][user_login] = my_user_data
+
+        # and writing new data into settings file
+        update_json_data(all_users_data, f"../code/users_data.json")
+
 
 class CustomTimer():
     def __init__(self, times_per_second: int, time_range: int = None):

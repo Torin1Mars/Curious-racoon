@@ -5,21 +5,6 @@ from buttons import StaticButton
 from support import CustomTimer
 
 
-class TournamentWindow:
-    def __init__(self, screen: pygame.surface.Surface, tournament_data: dict):
-        self.display_surface = screen
-        self.tournament_data = tournament_data
-
-        self.main_sprite_group = pygame.sprite.Group
-        self.__make_tournament_window()
-
-    def __make_tournament_window(self):
-        pass
-
-    def draw(self):
-        self.main_sprite_group.draw(self.display_surface)
-
-
 #######################################################################################################################
 class PauseWindow:
     def __init__(self, change_level_internal_state, ui_push_time):
@@ -94,20 +79,20 @@ class YesNoWindow:
                                 'Bt_no_2': f"../graphics/additional_windows/yes_no_window/Bt_no_2.png"}
 
         self.buttons = []
-        self.__create_buttons()
+        self._create_buttons()
         self.__create_inscription()
 
-    def __create_buttons(self):
+    def _create_buttons(self):
         temp_surf_1 = pygame.image.load(self.surf_path['Bt_ok_1']).convert_alpha()
         temp_surf_2 = pygame.image.load(self.surf_path['Bt_ok_2']).convert_alpha()
         button_ok = StaticButton((50, 50), (temp_surf_1, temp_surf_2), self.display_surface, f"ok")
-        button_ok.image_rect.bottom = self.bg_surface_sprite.rect.bottom - 45
+        button_ok.image_rect.bottom = self.bg_surface_sprite.rect.bottom - 50
         button_ok.image_rect.right = self.bg_surface_sprite.rect.centerx - 35
 
         temp_surf_1 = pygame.image.load(self.surf_path['Bt_no_1']).convert_alpha()
         temp_surf_2 = pygame.image.load(self.surf_path['Bt_no_2']).convert_alpha()
         button_no = StaticButton((50, 50), (temp_surf_1, temp_surf_2), self.display_surface, f"no")
-        button_no.image_rect.bottom = self.bg_surface_sprite.rect.bottom - 45
+        button_no.image_rect.bottom = self.bg_surface_sprite.rect.bottom - 50
         button_no.image_rect.left = self.bg_surface_sprite.rect.centerx + 35
 
         self.buttons.extend([button_ok, button_no])
@@ -127,7 +112,9 @@ class YesNoWindow:
         substrate_surf = pygame.transform.scale(substrate_surf, (substrate_width, substrate_height))
         substrate_sprite = Static_centerTile(substrate_surf, (self.pos.x, 0))
 
-        substrate_sprite.rect.top = self.bg_surface_sprite.rect.centery - 105
+        button_top = self.buttons[0].image_rect.top
+        substrate_rect_centery = self.bg_surface_sprite.rect.top + (button_top - self.bg_surface_sprite.rect.top) /2
+        substrate_sprite.rect.centery = substrate_rect_centery+15
         self.static_sprites.add(substrate_sprite)
 
         temp_height_pos: int = 0
@@ -156,3 +143,16 @@ class YesNoWindow:
         self.static_sprites.draw(self.display_surface)
         for button in self.buttons:
             button.draw()
+
+class InfoWindow(YesNoWindow):
+    def __init__(self, screen: pygame.Surface, pos: tuple, size: tuple, question_inscription: tuple):
+        YesNoWindow.__init__(self, screen, pos, size, question_inscription)
+
+    def _create_buttons(self):
+        temp_surf_1 = pygame.image.load(self.surf_path['Bt_ok_1']).convert_alpha()
+        temp_surf_2 = pygame.image.load(self.surf_path['Bt_ok_2']).convert_alpha()
+        button_ok = StaticButton((50, 50), (temp_surf_1, temp_surf_2), self.display_surface, f"ok")
+        button_ok.image_rect.bottom = self.bg_surface_sprite.rect.bottom - 40
+        button_ok.image_rect.centerx = self.bg_surface_sprite.rect.centerx
+
+        self.buttons.append(button_ok)

@@ -1,17 +1,14 @@
-{"users_logins":
-    {
-    "default_settings":
-        {
-            "game_settings":
-            {
-               "game_difficulty": "normal",
+{
+    "users_logins": {
+        "default": {
+            "game_settings": {
+                "game_difficulty": "normal",
                 "bg_music_volume": 0.5,
                 "effects_sound_volume": 0.5
             },
+            "date": "01/01/2010 12:00:01",
             "game_time": 0,
-
-            "levels_stars":
-            {
+            "levels_stars": {
                 "level_1": 0,
                 "level_2": 0,
                 "level_3": 0,
@@ -24,29 +21,25 @@
                 "level_10": 0
             }
         },
-
-    "test":
-        {
-            "game_settings":
-            {
-               "game_difficulty": "normal",
-                "bg_music_volume": 0.6,
+        "test": {
+            "game_settings": {
+                "game_difficulty": "normal",
+                "bg_music_volume": 0.5,
                 "effects_sound_volume": 0.5
             },
-            "game_time": 5,
-
-            "levels_stars":
-            {
+            "date": "15/12/2023 19:47:24",
+            "game_time": 0,
+            "levels_stars": {
                 "level_1": 2,
                 "level_2": 3,
-                "level_3": 2,
-                "level_4": 1,
+                "level_3": 3,
+                "level_4": 2,
                 "level_5": 2,
-                "level_6": 3,
+                "level_6": 2,
                 "level_7": 2,
                 "level_8": 2,
-                "level_9": 0,
-                "level_10": 0
+                "level_9": 2,
+                "level_10": 2
             }
         }
     }

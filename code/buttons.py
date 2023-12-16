@@ -36,6 +36,32 @@ class StaticButton:
         else:
             self.display_surface.blit(self.surfaces_dict['first_image'], self.image_rect)
 
+class StaticClickButton(StaticButton):
+    def __init__(self, pos: tuple, surfaces: tuple, screen: pygame.Surface, button_code: int):
+        StaticButton.__init__(self, pos, surfaces, screen, button_code)
+        self.clicked: bool = False
+
+    def _click(self):
+        if self.clicked:
+            self.clicked = False
+        else:
+            self.clicked = True
+
+    def update(self, mouse_pos, events):
+        self.pressed = False
+        if self.image_rect.collidepoint(mouse_pos):
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.pressed = True
+                    self._click()
+
+    def draw(self):
+        if not self.clicked:
+            self.display_surface.blit(self.surfaces_dict['first_image'], self.image_rect)
+        else:
+            self.display_surface.blit(self.surfaces_dict['second_image'], self.image_rect)
+
+
 class StaticSoundButton:
     def __init__(self, pos: tuple, surfaces: tuple, screen, button_code: int, mute_status):
         self.pos = pos
@@ -99,4 +125,6 @@ class StaticSoundButton:
                     self.pressed = True
         else:
             self.mouse_collide = False
+
+
 

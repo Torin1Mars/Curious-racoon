@@ -1,6 +1,6 @@
 import pygame
 from support import import_folder, tile_size
-class Tile (pygame.sprite.Sprite):
+class Tile(pygame.sprite.Sprite):
     def __init__(self, size, x, y):
         super().__init__()
         self.image = pygame.Surface((size, size))
@@ -47,6 +47,30 @@ class Static_centerTile(pygame.sprite.Sprite):
 
     def update(self, shift_x):
         self.rect.x += shift_x
+
+class Static_centerStar(Static_centerTile):
+    def __init__(self, surface, pos):
+        Static_centerTile.__init__(self, surface, pos)
+
+        self.original_scale_image = self.image
+        self.original_scale_image_rect = self.original_scale_image.get_rect()
+
+        self.animation_status: bool = True
+        #prcent of scaling
+        self.animation_speed: int = 2
+
+    def _animate(self):
+        if self.animation_status:
+            scaling = self.animation_speed/100
+            self.image = pygame.transform.scale(self.original_scale_image,\
+                                                (self.original_scale_image_rect.width*scaling, self.original_scale_image_rect.height*scaling))
+            self.animation_speed += 3
+
+    def update(self, shift_x):
+        self.rect.x += shift_x
+        self._animate()
+        if self.animation_speed >= 100:
+            self.animation_status = False
 
 class Static_centerDoubleTile(pygame.sprite.Sprite):
     def __init__(self, surfaces: tuple, pos, name:str):

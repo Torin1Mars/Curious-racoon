@@ -3,7 +3,7 @@ import settings
 from support import import_folder, CustomTimer
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, display_surface, create_jump_particles, change_health, bg_shift_x, sound, game_difficulty):
+    def __init__(self, pos, display_surface, create_jump_particles, change_health, bg_shift_x, sound, game_mode):
         super().__init__()
         # Animation settings
         self.import_character_assets()
@@ -38,16 +38,21 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = pos
         self.display_surface = display_surface
 
+        self.game_mode = game_mode
+        self.damage: int = 0
+        self._apply_game_mode()
+
         # Player movement
         self.player_direction = pygame.math.Vector2(0, 0)
         self.gravity = settings.default_gravity
-        self.speed = game_difficulty
+        self.speed = settings.player_speed
         self.jump_height = settings.default_jump_height
         self.collision_rect = pygame.Rect(self.rect)
         self.collision_rect = pygame.Rect(self.rect.left+7, self.rect.top+5, 45, 60)
 
         # Audio
         self.player_sound = sound
+        self.jump_sound_pause: float = 0
 
         # Timer for invisible status
         self.timer = CustomTimer(10, 3)
@@ -71,9 +76,19 @@ class Player(pygame.sprite.Sprite):
         for animation in self.animations.keys():
             full_path = character_path+animation
             self.animations[animation] = import_folder (full_path)
+
     def import_dust_run_particles(self):
         self.dust_run_particles = \
             import_folder('../animation_assets/character/dust_particles/run')
+
+    def _apply_game_mode(self):
+        if self.game_mode == "hard":
+            self.damage = -24
+        elif self.game_mode == "normal":
+            self.damage = -18
+        # if my_game_mode['easy']:
+        else:
+            self.damage = -12
 
     def animate(self):
         animation = self.animations[self.status]
@@ -138,6 +153,11 @@ class Player(pygame.sprite.Sprite):
     # Character's moving
     def get_input(self):
         keys = pygame.key.get_pressed()
+        #reseting jump sound timer to prevent mixing two sounds
+        #in case when jump_sound_pause less then length of melody we don't turn on jump sound melody
+        if self.jump_sound_pause > 2:
+            self.jump_sound_pause = 2
+
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             self.player_direction.x = -1
             self.right_facing_direction = False
@@ -154,10 +174,15 @@ class Player(pygame.sprite.Sprite):
 
         if (keys[pygame.K_SPACE] or keys[pygame.K_UP]) and self.player_on_ground:
             self.player_jump()
-            self.player_sound.play_effect_sound('jump_sound')
+
+            if self.jump_sound_pause > self.player_sound.jump_sound.get_length():
+                self.player_sound.play_effect_sound('jump_sound')
+                self.jump_sound_pause = 0
 
             if not self.invincible:
                 self.create_jump_particles(self.rect.midbottom)
+
+        self.jump_sound_pause += 1/settings.fps
 
     def apply_gravity(self):
         self.player_direction.y += self.gravity

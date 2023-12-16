@@ -1,20 +1,22 @@
-import pygame,sys
-from settings import screen_width, screen_height, game_difficulty
+import pygame, sys
+from settings import screen_width, screen_height, game_mode
 from tiles import Static_centerTile, Static_centerDoubleTile, AnimatedStaticPict
 from buttons import StaticButton, StaticSoundButton
-from additional_windows import YesNoWindow
+from additional_windows import YesNoWindow, InfoWindow
 from leaderboard import Leaderboard
-
-from support import CustomTimer
+from support import save_game
 
 class MenuWindow:
-    def __init__(self, screen: pygame.Surface, change_status, mute_status, user_settings):
+    def __init__(self, screen: pygame.Surface, change_status, mute_status, user_login, user_data, hide_cursor):
         self.display_surface = screen
-
         self.mute_status = mute_status
-        self.user_settings = user_settings
+
+        self.user_login = user_login
+        self.user_data = user_data
         self.change_status = change_status
+        self.hide_cursor = hide_cursor
         self.previous_status = None
+
 
         self.internal_status = "menu_window"
 
@@ -27,9 +29,9 @@ class MenuWindow:
                             'bt_continue_2': '../graphics/menu_window/Bt_continue_2.png',
                             'bt_continue_code': 1,
 
-                            'bt_menu_1': '../graphics/menu_window/Bt_menu_1.png',
-                            'bt_menu_2': '../graphics/menu_window/Bt_menu_2.png',
-                            'bt_menu_code': 2,
+                            'bt_map_1': '../graphics/menu_window/bt_map_1.png',
+                            'bt_map_2': '../graphics/menu_window/bt_map_2.png',
+                            'bt_map_code': 2,
 
                             'bt_settings_1': '../graphics/menu_window/Bt_settings_1.png',
                             'bt_settings_2': '../graphics/menu_window/Bt_settings_2.png',
@@ -45,7 +47,11 @@ class MenuWindow:
 
                             'bt_cup_1': '../graphics/menu_window/Win_cup_1.png',
                             'bt_cup_2': '../graphics/menu_window/Win_cup_2.png',
-                            'bt_cup_code': 5
+                            'bt_cup_code': 5,
+
+                            'bt_save_1': '../graphics/menu_window/Bt_save_1.png',
+                            'bt_save_2': '../graphics/menu_window/Bt_save_2.png',
+                            'bt_save_code': 6,
                             }
 
         self.bg_image = pygame.image.load(self.images_data['bg_menu']).convert_alpha()
@@ -58,6 +64,7 @@ class MenuWindow:
 
         self.settings_window = None
         self.exit_question_window = None
+        self.info_window = None
 
     def __reset_returning_data(self):
         self.returning_data = {'data_from_menu': [],
@@ -72,33 +79,36 @@ class MenuWindow:
 
     def _create_main_buttons_(self):
         continue_surf = self._load_surfaces_((self.images_data['bt_continue_1'], self.images_data['bt_continue_2']))
-        continue_bt = StaticButton((screen_width / 2, 100), continue_surf, self.display_surface,
+        continue_bt = StaticButton((screen_width / 2, 180), continue_surf, self.display_surface,
                                self.images_data['bt_continue_code'])
 
-        menu_surf = self._load_surfaces_((self.images_data['bt_menu_1'], self.images_data['bt_menu_2']))
-        menu_bt = StaticButton((screen_width / 2, 250), menu_surf, self.display_surface,
-                               self.images_data['bt_menu_code'])
-
         settings_surf = self._load_surfaces_((self.images_data['bt_settings_1'], self.images_data['bt_settings_2']))
-        settings_bt = StaticButton((screen_width / 2, 400), settings_surf, self.display_surface,
+        settings_bt = StaticButton((screen_width / 2, 330), settings_surf, self.display_surface,
                                    self.images_data['bt_settings_code'])
 
         exit_surf = self._load_surfaces_((self.images_data['bt_exit_1'], self.images_data['bt_exit_2']))
-        exit_bt = StaticButton((screen_width / 2, 550), exit_surf, self.display_surface,
+        exit_bt = StaticButton((screen_width / 2, 480), exit_surf, self.display_surface,
                                self.images_data['bt_exit_code'])
 
+        map_surf = self._load_surfaces_((self.images_data['bt_map_1'], self.images_data['bt_map_2']))
+        map_bt = StaticButton((80, 235), map_surf, self.display_surface,
+                               self.images_data['bt_map_code'])
+
         bt_sound_surf = self._load_surfaces_((self.images_data['bt_sound_1'], self.images_data['bt_sound_2']))
-        bt_sound = StaticSoundButton((screen_width - 80, 80), bt_sound_surf, self.display_surface,
+        bt_sound = StaticSoundButton((screen_width - 80, 90), bt_sound_surf, self.display_surface,
                                      self.images_data['bt_sound_code'], self.mute_status)
 
         cup_surf = self._load_surfaces_((self.images_data['bt_cup_1'], self.images_data['bt_cup_2']))
-        bt_cup = StaticButton((185, 95), cup_surf, self.display_surface, self.images_data['bt_cup_code'])
+        bt_cup = StaticButton((145, 95), cup_surf, self.display_surface, self.images_data['bt_cup_code'])
 
-        self.main_buttons_list.extend([continue_bt, menu_bt, settings_bt, exit_bt, bt_sound, bt_cup])
+        save_surf = self._load_surfaces_((self.images_data['bt_save_1'], self.images_data['bt_save_2']))
+        bt_save = StaticButton((80, 375), save_surf, self.display_surface, self.images_data['bt_save_code'])
+
+        self.main_buttons_list.extend([continue_bt, map_bt, settings_bt, exit_bt, bt_sound, bt_cup, bt_save])
 
     def make_exit_question(self):
-        row_1 = f"WOULD YOU LIKE TO SAVE"
-        row_2 = f"YOUR GAME PROGRESS"
+        row_1 = f"Would you like to save"
+        row_2 = f"your game progress"
         self.exit_question_window = YesNoWindow(self.display_surface, (screen_width / 2, 300), (400, 300), (row_1, row_2))
 
     def event_handler(self, button_code):
@@ -107,21 +117,34 @@ class MenuWindow:
             self.internal_status = "exit_question"
 
         elif button_code == self.images_data['bt_continue_code']:
+            if self.previous_status == f"level":
+                self.hide_cursor(flag=True)
+            else:
+                self.hide_cursor(flag=False)
+
             self.change_status(self.previous_status)
 
-        elif button_code == self.images_data['bt_menu_code']:
-            self.returning_data['data_from_menu'].append(self.images_data['bt_menu_code'])
+        elif button_code == self.images_data['bt_map_code']:
+            self.returning_data['data_from_menu'].append(self.images_data['bt_map_code'])
 
         elif button_code == self.images_data['bt_settings_code']:
             self.internal_status = "settings_window"
-            self.settings_window = SettingsWindow(self.display_surface, self.user_settings)
+            self.settings_window = SettingsWindow(self.display_surface, self.user_data['game_settings'])
 
         elif button_code == self.images_data['bt_sound_code']:
             self.returning_data['data_from_menu'].append(self.images_data['bt_sound_code'])
 
         elif button_code == self.images_data['bt_cup_code']:
             self.internal_status = "leaderboard_window"
-            self.leaderboard = Leaderboard(self.display_surface, 25)
+            self.leaderboard = Leaderboard(self.display_surface)
+
+        elif button_code == self.images_data['bt_save_code']:
+            save_game(self.user_login, self.user_data)
+
+            row_1 = f"Your data has been"
+            row_2 = f"successfully saved"
+            self.info_window = InfoWindow(self.display_surface, (screen_width / 2, 300), (400, 300), (row_1, row_2))
+            self.internal_status = "info_window"
 
     def get_data(self):
         return self.returning_data
@@ -137,6 +160,11 @@ class MenuWindow:
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
+                        if self.previous_status == f"level":
+                            self.hide_cursor(flag=True)
+                        else:
+                            self.hide_cursor(flag=False)
+
                         self.change_status(self.previous_status)
 
         elif self.internal_status == "settings_window":
@@ -152,6 +180,18 @@ class MenuWindow:
             if data_from_leaderboard:
                 self.internal_status = "menu_window"
 
+        elif self.internal_status == "info_window":
+            self.info_window.update(mouse_pos, events)
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.internal_status = "menu_window"
+
+            answer = self.info_window.get_data()
+            if answer == f"ok":
+                self.internal_status = "menu_window"
+                self.info_window = None
+
         elif self.internal_status == "exit_question":
             self.exit_question_window.update(mouse_pos, events)
 
@@ -160,16 +200,15 @@ class MenuWindow:
                     if event.key == pygame.K_ESCAPE:
                         self.internal_status = "menu_window"
 
-            payload = self.exit_question_window.get_data()
-            if payload:
-                if payload == f"ok":
-                    print("PASS")
-                    #pygame.quit()
-                    #sys.exit()
+            answer = self.exit_question_window.get_data()
+            if answer:
+                if answer == f"ok":
+                    save_game(self.user_login, self.user_data)
                 else:
                     self.internal_status = "menu_window"
-                    pygame.quit()
-                    sys.exit()
+                pygame.quit()
+                sys.exit()
+
     def draw(self):
         self.display_surface.blit(self.bg_image, self.bg_rect)
         if self.internal_status == "menu_window":
@@ -181,6 +220,11 @@ class MenuWindow:
 
         elif self.internal_status == "leaderboard_window":
             self.leaderboard.draw()
+
+        elif self.internal_status == "info_window":
+            for button in self.main_buttons_list:
+                button.draw()
+            self.info_window.draw()
 
         elif self.internal_status == "exit_question":
             for button in self.main_buttons_list:
@@ -234,7 +278,7 @@ class SettingsWindow:
 
         '''additional list to compare game difficulty 
         from settings window and game difficulty keys'''
-        self.list_difficulty_keys = list(game_difficulty.keys())
+        self.list_difficulty_keys = list(game_mode.keys())
 
     def __create_grass(self):
         grass_img = pygame.image.load('../graphics/menu_window/settings/grass.png').convert_alpha()
@@ -244,7 +288,7 @@ class SettingsWindow:
 
     def __create_slide_buttons(self) -> None:
         temp_surf = pygame.image.load('../graphics/menu_window/settings/BTN_ORANGE.png').convert_alpha()
-        self.game_difficulty_slider = SlidingStepButton((screen_width / 2, 180), temp_surf)
+        self.game_mode_slider = SlidingStepButton((screen_width / 2, 180), temp_surf)
 
         temp_surf = pygame.image.load('../graphics/menu_window/settings/BTN_GREEN.png').convert_alpha()
         self.background_sound_button = SlidingBarButton((screen_width / 2, 315), temp_surf)
@@ -266,7 +310,7 @@ class SettingsWindow:
         self.static_buttons.extend([save_button, cancel_button])
 
     def __set_start_buttons_pos(self):
-        self.game_difficulty_slider.set_start_pos(self.user_settings['game_difficulty'])
+        self.game_mode_slider.set_start_pos(self.user_settings['game_difficulty'])
         self.background_sound_button.set_start_pos(self.user_settings['bg_music_volume'])
         self.effects_sound_button.set_start_pos(self.user_settings['effects_sound_volume'])
 
@@ -290,7 +334,7 @@ class SettingsWindow:
 
     def update(self, mouse_pos, events):
         if self.settings_internal_status == "settings_window":
-            self.game_difficulty_slider.update(mouse_pos, events)
+            self.game_mode_slider.update(mouse_pos, events)
 
             for button in self.slide_buttons:
                 button.update(mouse_pos, events)
@@ -302,11 +346,11 @@ class SettingsWindow:
 
             animation_speed: float = 0
             # [f"EASY", f"NORMAL", f"HARD"]
-            if self.game_difficulty_slider.active_difficulty == self.list_difficulty_keys[0]:
+            if self.game_mode_slider.active_difficulty == self.list_difficulty_keys[0]:
                 animation_speed = 0.2
-            elif self.game_difficulty_slider.active_difficulty == self.list_difficulty_keys[1]:
+            elif self.game_mode_slider.active_difficulty == self.list_difficulty_keys[1]:
                 animation_speed = 0.4
-            elif self.game_difficulty_slider.active_difficulty == self.list_difficulty_keys[2]:
+            elif self.game_mode_slider.active_difficulty == self.list_difficulty_keys[2]:
                 animation_speed = 0.6
 
             self.animated_characters.update(animation_speed)
@@ -319,7 +363,7 @@ class SettingsWindow:
                     self.external_status = "menu_window"
 
                 elif question_window_data == f"ok":
-                    self.returning_data = {'game_difficulty': self.game_difficulty_slider.get_data(),
+                    self.returning_data = {'game_difficulty': self.game_mode_slider.get_data(),
                                            'bg_music_volume': self.background_sound_button.get_data(),
                                            'effects_sound_volume': self.effects_sound_button.get_data()}
 
@@ -331,7 +375,7 @@ class SettingsWindow:
         for button in self.slide_buttons:
             button.draw(self.display_surface)
 
-        self.game_difficulty_slider.draw(self.display_surface)
+        self.game_mode_slider.draw(self.display_surface)
 
         for button in self.static_buttons:
             button.draw()
@@ -367,7 +411,6 @@ class SlidingBarButton:
     def __make_sound_level_bar(self):
         self.sound_level_img = pygame.transform.scale(self.sound_level_substrate,\
                                                       (self.slide_distance + 40, self.sound_level_substrate.get_height()))
-
         self.sound_level_rect = self.sound_level_img.get_rect()
 
         temp_rect = self.sound_level_rect.copy()
@@ -474,29 +517,29 @@ class SlidingStepButton:
         sector_1 = (self.end_points['left_end_point'][0], self.end_points['left_end_point'][0] + (self.end_points['center_end_point'][0] - self.end_points['left_end_point'][0])/2)
         sector_3 = (self.end_points['center_end_point'][0] + (self.end_points['right_end_point'][0] - self.end_points['center_end_point'][0])/2, self.end_points['right_end_point'][0],)
         sector_2 = (sector_1[1], sector_3[0])
-        game_difficulty_keys = list(game_difficulty)
+        game_mode_keys = list(game_mode)
 
         if slider_rect_x in range(int(sector_2[0]), int(sector_2[1])):
             self.slider_group.sprite.rect.centerx = self.end_points['center_end_point'][0]
-            self.active_difficulty = game_difficulty_keys[1]
+            self.active_difficulty = game_mode_keys[1]
 
         elif slider_rect_x in range(int(sector_3[0]), int(sector_3[1])):
             self.slider_group.sprite.rect.centerx = self.end_points['right_end_point'][0]
-            self.active_difficulty = game_difficulty_keys[2]
+            self.active_difficulty = game_mode_keys[2]
         else:
             self.slider_group.sprite.rect.centerx = self.end_points['left_end_point'][0]
-            self.active_difficulty = game_difficulty_keys[0]
+            self.active_difficulty = game_mode_keys[0]
 
     def get_data(self):
         return self.active_difficulty
 
     def set_start_pos(self, user_difficulty_setting):
         self.active_difficulty = user_difficulty_setting
-        game_difficulty_keys = list(game_difficulty.keys())
+        game_mode_keys = list(game_mode.keys())
 
-        if user_difficulty_setting == game_difficulty_keys[0]:
+        if user_difficulty_setting == game_mode_keys[0]:
             self.button_sprite.rect.centerx = self.end_points['left_end_point'][0]
-        elif user_difficulty_setting == game_difficulty_keys[2]:
+        elif user_difficulty_setting == game_mode_keys[2]:
             self.button_sprite.rect.centerx = self.end_points['right_end_point'][0]
         else:
             self.button_sprite.rect.centerx = self.end_points['center_end_point'][0]

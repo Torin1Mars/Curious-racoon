@@ -2,8 +2,9 @@ import pygame
 from settings import screen_width, screen_height
 from support import CustomTimer, read_json_data
 from additional_windows import YesNoWindow
+from buttons import StaticButton, StaticClickButton
 
-class Start_window():
+class Start_window:
     def __init__(self, screen):
         self.screen = screen
         self.output_status = 'start_window'
@@ -37,7 +38,8 @@ class Start_window():
         self.button_inscription_rect = self.button_inscription_surf.get_rect(center=(screen_width / 2, 630))
         self.button_title_surf_status = False
 
-        self.user_data = None
+        self.user_data:dict = {}
+        self.users_savings:dict = {}
 
     def import_data(self):
         self.pygame_image = pygame.image.load('../graphics/start_window/pygame_logo.png').convert_alpha()
@@ -120,6 +122,9 @@ class Bottom_input_field:
         self.pos = pos
         # Saving time when object was created
 
+        self.existing_users_savings:dict = {}
+        self.load_users_savings()
+
         self.status = "start_window"
 
         # template surface
@@ -139,14 +144,13 @@ class Bottom_input_field:
         # Settings for input_text title
         self.input_box_surf = self.input_font.render(f"", False, 'white')
         self.input_box_rect = self.input_box_surf.get_rect(left=self.pos.x + 5, bottom=self.pos.y + 2)
-        self.allowed_litters = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j',
-                                'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
-                                'O', 'P',
-                                'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M',
-                                '.', '_', '-', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+        self.allowed_litters_low = str("qwertyuiopasdfghjklzxcvbnm")
+        self.allowed_litters_top = self.allowed_litters_low.upper()
+        self.allowed_litters:str
+        self._construct_allowed_litres()
 
         self.input_text = ''
-        self.user_login:str = ""
+        self.user_login: str = ""
         self.input_text_status = False
 
         # Additional timer for invisible status
@@ -156,14 +160,127 @@ class Bottom_input_field:
         self.user_data: dict = {}
         self.question_window = None
 
-        #YesNoWindow(self.display_surface, (screen_width / 2, 300), (400, 300), (row_1, row_2))
+        #pop-up menu
+        self.arrow_button = None
+        self._make_arrow_button()
 
-    def __pack_user_data(self, login: str, data: dict, user_status) -> dict:
-        self.user_data = {'user_login': login,
-                          'user_data': data,
-                          'user_status': user_status}
+        self.substrate_surf: pygame.Surface = None
+        self.substrate_rect: pygame.rect.Rect = None
+        self.substrate_topleft_pos = pygame.math.Vector2(590, 254)
+        self._make_substrate()
 
-    def update_input(self, events):
+
+        self.logins_buttons_font = pygame.font.Font('../graphics/start_window/ARCADEPI.ttf', 20)
+        self.logins_buttons_list: list = []
+        self._make_logins_list_buttons()
+
+        self.animation_speed: int = 3
+        self.substrate_area_rect = self.substrate_rect.copy()
+        self.substrate_area_rect.topleft = (0, 0)
+        self.substrate_area_rect.height = 0
+
+        self.animation_state: bool = False
+        self.animation_direction: str = 'None'
+        self.current_y: int = self.substrate_topleft_pos.y + self.substrate_rect.height
+
+    def _animate_users_login_list(self):
+        if self.animation_state and (self.animation_direction == "up"):
+            if self.substrate_area_rect.height < self.substrate_rect.height:
+                self.substrate_area_rect.height += self.animation_speed
+                self.substrate_area_rect.top = self.substrate_rect.height - self.substrate_area_rect.height
+                self.current_y = (self.substrate_topleft_pos.y + self.substrate_rect.height) - self.substrate_area_rect.height
+                self.animation_speed += 0.5
+
+            else:
+                self.substrate_area_rect.top = 0
+                self.substrate_area_rect.height = self.substrate_rect.height
+                self.current_y = self.substrate_topleft_pos.y
+                self.animation_state = False
+
+                self.animation_speed: int = 3
+
+        elif self.animation_state and (self.animation_direction == "down"):
+            if self.substrate_area_rect.height > 0:
+                self.substrate_area_rect.height -= self.animation_speed
+                self.substrate_area_rect.top = self.substrate_rect.height - self.substrate_area_rect.height
+                self.current_y = (self.substrate_topleft_pos.y + self.substrate_rect.height) - self.substrate_area_rect.height
+
+                self.animation_speed += 0.5
+            else:
+                self.substrate_area_rect.top = self.substrate_rect.height
+                self.substrate_area_rect.height = 0
+                self.current_y = self.substrate_topleft_pos.y + self.substrate_rect.height
+                self.animation_state = False
+
+                self.animation_speed: int = 3
+
+                # update images buttons to set them to default
+                for button in self.logins_buttons_list:
+                    button.clicked = False
+
+    def _construct_allowed_litres(self):
+        allowed_litters_low = str("qwertyuiopasdfghjklzxcvbnm")
+        allowed_litters_top = self.allowed_litters_low.upper()
+        allowed_litters_symbols = str("._-1234567890")
+
+        self.allowed_litters = allowed_litters_top + allowed_litters_low + allowed_litters_symbols
+
+    def _make_arrow_button(self):
+        img_btn_1 = pygame.image.load('../graphics/start_window/Btn_Sizing_1.png').convert_alpha()
+        img_btn_2 = pygame.image.load('../graphics/start_window/Btn_Sizing_2.png').convert_alpha()
+        img_btn_code: int = 1
+        pos = (self.template_surface_rect.right-40, self.template_surface_rect.centery)
+        self.arrow_button = StaticClickButton(pos, (img_btn_1, img_btn_2), self.screen, img_btn_code)
+
+    def _make_substrate(self):
+        self.substrate_surf = pygame.image.load('../graphics/start_window/Bg_substrate.png').convert_alpha()
+        self.substrate_rect = self.substrate_surf.get_rect()
+        self.substrate_rect.topleft = self.substrate_topleft_pos
+
+    def _make_logins_list_buttons(self):
+        users_logins = list(self.existing_users_savings['users_logins'])
+        users_logins.pop(0)
+
+        pos_x = self.substrate_rect.left+30
+        pos_y = self.substrate_rect.bottom-15
+        y_space = 25
+
+        for user in users_logins:
+            surf_1 = self.logins_buttons_font.render(f"{user}", False, 'white')
+            surf_2 = self.logins_buttons_font.render(f"{user}", False, 'brown4')
+            button_code = user
+            button = StaticClickButton((0, 0), (surf_1, surf_2), self.screen, button_code)
+            button.image_rect.left = pos_x
+            button.image_rect.bottom = pos_y
+            self.logins_buttons_list.append(button)
+
+            pos_y -= y_space
+
+    def load_users_savings(self):
+        self.existing_users_savings = read_json_data(f"../code/users_data.json")
+
+    def update_input(self, mouse_pos, events):
+        # updating buttons
+        self.arrow_button.update(mouse_pos, events)
+        if self.arrow_button.pressed:
+            if self.animation_direction == "up":
+                self.animation_direction = "down"
+                self.animation_state = True
+            else:
+                self.animation_direction = "up"
+                self.animation_state = True
+
+        self._animate_users_login_list()
+
+        #updating user's logins buttons
+        for button in self.logins_buttons_list:
+            if button.image_rect.top > self.current_y:
+                button.update(mouse_pos, events)
+                if button.pressed:
+                    self.input_text = button.button_code
+                    self.animation_state = True
+                    self.animation_direction = "down"
+
         max_sight = 14
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -181,9 +298,8 @@ class Bottom_input_field:
 
                 if event.key == pygame.K_RETURN and self.input_text:
                     self.user_login = self.input_text
-                    data = read_json_data(f"../code/users_data.json")
 
-                    if self.user_login in data['users_logins']:
+                    if self.user_login in self.existing_users_savings['users_logins']:
                         row_1 = f"Welcome back"
                         row_2 = f"{self.user_login}"
                         row_3 = f"Would you like to load"
@@ -192,7 +308,8 @@ class Bottom_input_field:
                         self.question_window.inscription_font = pygame.font.SysFont("Impact", 20, False, True)
                         self.status = "question_window"
                     else:
-                        self.__pack_user_data(self.user_login, data['users_logins']['default_settings'], f"new")
+                        self.user_data = self.existing_users_savings['users_logins']['default']
+                        self.user_data['user_login'] = self.user_login
                         self.status = "overworld"
 
             self.input_box_surf = self.input_font.render(f"{self.input_text}", False, 'white')
@@ -215,7 +332,7 @@ class Bottom_input_field:
                 self.image_status = False
 
             if self.input_text_status:
-                self.update_input(events)
+                self.update_input(mouse_pos, events)
 
         elif self.status == "question_window":
             self.question_window.update(mouse_pos, events)
@@ -223,21 +340,37 @@ class Bottom_input_field:
             if question_window_data:
                 if question_window_data == f"no":
                     data = read_json_data(f"../code/users_data.json")
-                    self.__pack_user_data(self.user_login, data['users_logins']['default_settings'], f"new")
+                    self.user_data = data['users_logins']['default']
+                    self.user_data['user_login'] = self.user_login
+
+                    #self.__pack_user_data(self.user_login, data['users_logins']['default_settings'], f"new")
                     self.status = "overworld"
 
                 elif question_window_data == f"ok":
                     data = read_json_data(f"../code/users_data.json")
-                    self.__pack_user_data(self.user_login, data['users_logins'][self.user_login], f"existing")
+                    self.user_data = data['users_logins'][self.user_login]
+                    self.user_data['user_login'] = self.user_login
+
+                    #self.__pack_user_data(self.user_login, data['users_logins'][self.user_login], f"existing")
                     self.status = "overworld"
 
     def draw(self):
         if self.template_surface_state:
             self.screen.blit(self.template_surface, self.template_surface_rect)
+
         if self.image_status:
             self.screen.blit(self.bottom_inscription_surf, self.bottom_inscription_rect)
+
         if self.input_text_status:
             self.screen.blit(self.input_box_surf, self.input_box_rect)
+
+            self.screen.blit(self.substrate_surf, (self.substrate_topleft_pos.x, self.current_y), self.substrate_area_rect)
+
+            # updating buttons
+            self.arrow_button.draw()
+            for button in self.logins_buttons_list:
+                if button.image_rect.top > self.current_y:
+                    button.draw()
 
         if self.status == "question_window":
             self.question_window.draw()

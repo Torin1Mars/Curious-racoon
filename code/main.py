@@ -195,10 +195,6 @@ class Game:
 
                 self.hide_cursor(False)
                 if self.level.player_win:
-                    '''if self.game_data[self.current_level]['node_stars'] < self.level.earned_stars:
-                        self.game_data[self.current_level]['node_stars'] = self.level.earned_stars
-                    #adding time in secound not in minuts
-                    self.total_game_time += int(self.level.ui.level_time)'''
 
                     if self.user_data['levels_stars'][self.current_level] < self.level.earned_stars:
                         self.user_data['levels_stars'][self.current_level] = self.level.earned_stars

@@ -1,0 +1,13 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+/build_v1.1.12
+
+/build
+/.idea/
+/__pycache__
+/venv
+
+/code/__pycache__
+/code/test
+/code/main.spec

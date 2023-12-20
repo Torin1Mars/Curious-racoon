@@ -3,6 +3,14 @@
     Platformer game with custom engine 
     created with using pygame library
 </ul>
+
+  # Special thanks
+<ul>
+    All guys from ClearCode project (it helps me a lot with my project issues): 
+    - https://www.youtube.com/@ClearCode
+    Tiled project and all thair teams:
+    -https://www.mapeditor.org/ 
+</ul>
   
 ## Game includes:
  - Start window

@@ -5,10 +5,10 @@
 </ul>
 
 ## Special thanks
-All guys from ClearCode project (thay helped me a lot with some my project issues): 
-- https://www.youtube.com/@ClearCode   
-Tiled project and all thair teams:
--https://www.mapeditor.org/
+*All guys from ClearCode project (thay helped me a lot with some my project issues):*<br> 
+- https://www.youtube.com/@ClearCode <br>
+*Tiled project and all thair teams:*<br>
+-https://www.mapeditor.org/<br>
   
 ## Game includes:
  - Start window

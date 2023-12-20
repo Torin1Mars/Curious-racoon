@@ -2,25 +2,26 @@ import pygame
 from settings import fps
 from support import CustomTimer
 
+
 class UI:
     def __init__(self, screen: pygame.surface.Surface, max_level_time: int):
-        #setup
+        # setup
         self.display_surface = screen
         self.max_level_time = max_level_time
 
-        #health
+        # health
         self.health_bar = pygame.image.load('../graphics/ui/health_bar_2.png').convert_alpha()
         self.health_bar_topleft = (40, 35)
         self.bar_max_width = 182
         self.bar_height = 12
 
-        #coins
+        # coins
         self.coin = pygame.image.load('../graphics/ui/coin.png').convert_alpha()
         self.coin_rect = self.coin.get_rect(center=(38, 85))
         self.font = pygame.font.SysFont("Impact", 30, False, True)
 
-        #timer settings
-        self.time_per_frame = round(1/fps, 3)
+        # timer settings
+        self.time_per_frame = round(1 / fps, 3)
         self.level_time = 0
         self.showing_time = 0
         self.timer_font = pygame.font.SysFont("Impact", 25, False, True)
@@ -65,7 +66,7 @@ class UI:
     def show_health(self, current, full):
         self.display_surface.blit(self.health_bar, (12, 10))
         current_health_ratio = current / full
-        current_bar_width = self.bar_max_width*current_health_ratio
+        current_bar_width = self.bar_max_width * current_health_ratio
         health_bar_rect = pygame.Rect((55, 40), (current_bar_width, self.bar_height))
         pygame.draw.rect(self.display_surface, 'chartreuse3', health_bar_rect, 0, 4)
 
@@ -78,7 +79,7 @@ class UI:
     def show_coins(self, amount, max_level_amount):
         self.display_surface.blit(self.coin, self.coin_rect)
         coin_amount_surf = self.font.render(f"{amount}/{max_level_amount}", False, 'black')
-        coin_amount_rect = coin_amount_surf.get_rect(midleft=(self.coin_rect.right+5, self.coin_rect.centery))
+        coin_amount_rect = coin_amount_surf.get_rect(midleft=(self.coin_rect.right + 5, self.coin_rect.centery))
         self.display_surface.blit(coin_amount_surf, coin_amount_rect)
 
     def show_timer(self):
@@ -88,3 +89,22 @@ class UI:
             self.__draw_timer()
         elif self.timer_status and self.my_timer.get_status():
             self.__draw_timer()
+
+
+#######################################################################################################################
+class Cursor:
+    def __init__(self):
+        self.my_cursor_surf_1 = pygame.image.load('../graphics/ui/CRS_HAND.png').convert_alpha()
+        self.my_cursor_surf_2 = pygame.Surface((self.my_cursor_surf_1.get_width(), self.my_cursor_surf_1.get_height()),
+                                               pygame.SRCALPHA)
+
+        self.my_cursor_1 = pygame.cursors.Cursor((0, 0), self.my_cursor_surf_1)
+        self.my_cursor_2 = pygame.cursors.Cursor((0, 0), self.my_cursor_surf_2)
+        pygame.mouse.set_cursor(self.my_cursor_1)
+
+    def hide_cursor(self, flag: bool) -> None:
+        # if flag is True we are hiding game cursor
+        if flag:
+            pygame.mouse.set_cursor(self.my_cursor_2)
+        else:
+            pygame.mouse.set_cursor(self.my_cursor_1)

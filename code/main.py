@@ -12,6 +12,7 @@ from menu_window import MenuWindow
 from level_end_window import Level_end_window
 
 from leaderboard import sort_leader_table
+from ui import Cursor
 
 
 #######################################################################################################################
@@ -34,6 +35,7 @@ class Game:
 
         # audio
         self.my_sound = Soundbar()
+        self.game_cursor = Cursor()
 
         # starting initialization
         self.current_level: str = "level_1"
@@ -52,13 +54,6 @@ class Game:
         self.user_settings = new_settings
         self.my_sound.set_settings(self.user_settings)
         self.user_data['game_settings'] = new_settings
-
-    '''def __load_game_progress(self, my_progress: dict) -> None:
-        progress = my_progress
-        self.total_game_time = progress['game_time']
-
-        for level in progress['levels_stars']:
-            self.game_data[level]['node_stars'] = progress['levels_stars'][level]'''
 
     def __load_user_game_data(self, game_data_from_start_window: dict) -> None:
         self.user_data = game_data_from_start_window
@@ -121,22 +116,15 @@ class Game:
     def update_total_game_time(self, time: float):
         self.total_game_time += time
 
-    def hide_cursor(self, flag:bool)->None:
-        # if flag is True we are hiding game cursor
-        if flag:
-            pygame.mouse.set_cursor(my_cursor_2)
-        else:
-            pygame.mouse.set_cursor(my_cursor_1)
-
     def create_level(self):
-        self.hide_cursor(flag=True)
+        self.game_cursor.hide_cursor(flag=True)
         current_level_data = self.game_data[self.current_level]
         self.level = Level(current_level_data, screen, self.my_sound,self.user_data['game_settings']['game_difficulty'])
         self.status = 'level'
         self.my_sound.play_level_bg_music()
 
     def create_overworld(self):
-        self.hide_cursor(flag=False)
+        self.game_cursor.hide_cursor(flag=False)
         self.overworld = Overworld(self.current_level, screen, self.create_level, self.change_game_level,\
                                    self.total_game_time, self.game_data, self.user_login, self.user_data)
         self.overworld.set_to_center_screen()
@@ -145,8 +133,8 @@ class Game:
 
     def check_menu(self, events: pygame.event.Event = None, flag: bool = None):
         if flag:
-            pygame.mouse.set_cursor(my_cursor_1)
-            self.menu_window = MenuWindow(screen, self.change_status, self.my_sound.mute_status, self.user_login, self.user_data, self.hide_cursor)
+            self.game_cursor.hide_cursor(flag=False)
+            self.menu_window = MenuWindow(screen, self.change_status, self.my_sound.mute_status, self.user_login, self.user_data, self.game_cursor.hide_cursor)
             self.menu_window.previous_status = self.status
             self.status = 'menu_window'
 
@@ -155,15 +143,15 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     #we need this state when game is new and level hasn't been created yet
                     if event.key == pygame.K_ESCAPE and not self.level:
-                        pygame.mouse.set_cursor(my_cursor_1)
-                        self.menu_window = MenuWindow(screen, self.change_status, self.my_sound.mute_status, self.user_login, self.user_data, self.hide_cursor)
+                        self.game_cursor.hide_cursor(flag=False)
+                        self.menu_window = MenuWindow(screen, self.change_status, self.my_sound.mute_status, self.user_login, self.user_data, self.game_cursor.hide_cursor)
                         self.menu_window.previous_status = self.status
                         self.status = 'menu_window'
 
                     # in all another stages we are using this state
                     elif event.key == pygame.K_ESCAPE and not self.level.level_internal_state == 'pause_window':
-                        pygame.mouse.set_cursor(my_cursor_1)
-                        self.menu_window = MenuWindow(screen, self.change_status, self.my_sound.mute_status, self.user_login, self.user_data, self.hide_cursor)
+                        self.game_cursor.hide_cursor(flag=False)
+                        self.menu_window = MenuWindow(screen, self.change_status, self.my_sound.mute_status, self.user_login, self.user_data, self.game_cursor.hide_cursor)
                         self.menu_window.previous_status = self.status
                         self.status = 'menu_window'
 
@@ -193,7 +181,7 @@ class Game:
             self.level.run(events)
             if self.level.player_win or self.level.player_loose:
 
-                self.hide_cursor(False)
+                self.game_cursor.hide_cursor(flag=False)
                 if self.level.player_win:
 
                     if self.user_data['levels_stars'][self.current_level] < self.level.earned_stars:
@@ -265,12 +253,8 @@ screen = pygame.display.set_mode((settings.screen_width, settings.screen_height)
 clock = pygame.time.Clock()
 pygame.display.set_caption('Curious Racoon')
 
-my_cursor_surf_1 = pygame.image.load('../graphics/ui/CRS_HAND.png').convert_alpha()
-my_cursor_surf_2 = pygame.Surface((my_cursor_surf_1.get_width(), my_cursor_surf_1.get_height()), pygame.SRCALPHA)
-
-my_cursor_1 = pygame.cursors.Cursor((0, 0), my_cursor_surf_1)
-my_cursor_2 = pygame.cursors.Cursor((0, 0), my_cursor_surf_2)
-pygame.mouse.set_cursor(my_cursor_1)
+app_icon = pygame.image.load('../code/Racoon_preview.png').convert_alpha()
+pygame.display.set_icon(app_icon)
 
 my_game = Game()
 

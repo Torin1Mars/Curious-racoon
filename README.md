@@ -5,10 +5,11 @@
 </ul>
 
 ## Special thanks
-   All guys from ClearCode project (it helps me a lot with my project issues): 
-   - https://www.youtube.com/@ClearCode
-   Tiled project and all thair teams:
-   -https://www.mapeditor.org/
+All guys from ClearCode project (it helps me a lot with my project issues): 
+- https://www.youtube.com/@ClearCode
+   
+Tiled project and all thair teams:
+-https://www.mapeditor.org/
   
 ## Game includes:
  - Start window

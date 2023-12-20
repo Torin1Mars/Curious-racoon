@@ -4,11 +4,11 @@
     created with using pygame library
 </ul>
 
-## Speciall thanks to: <br>
+## Special thanks to: <br>
 *"Clear Code" projet and all thair teams* <br>
-- https://www.youtube.com/@ClearCode
+-https://www.youtube.com/@ClearCode
 *"TILED" projet and all thair teams* <br>
-- https://www.mapeditor.org/
+-https://www.mapeditor.org/
   
 ## Game includes:
  - Start window

@@ -12,7 +12,8 @@
  - Settings window
   ![Settings](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_settings.jpg) 
  - Gameplay 
-  ![Gameplay](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_level.jpg)
+  ![Gameplay](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_level_1.jpg)
+  ![Gameplay](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_level_2.jpg)
 
   ## Additional: 
  <ul>

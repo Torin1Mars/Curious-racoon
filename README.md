@@ -5,10 +5,10 @@
 </ul>
 
 ## Special thanks to: <br>
-*"Clear Code" projet and all thair teams:* <br>
+*"Clear Code" project and all their teams:* <br>
 -https://www.youtube.com/@ClearCode <br>
 <br>
-*"TILED" projet and all thair teams:* <br>
+*"TILED" project and all their teams:* <br>
 -https://www.mapeditor.org <br>
   
 ## Game includes:

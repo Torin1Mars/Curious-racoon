@@ -3,6 +3,12 @@
     Platformer game with custom engine 
     created with using pygame library
 </ul>
+
+## Speciall thanks to: <br>
+*"Clear Code" projet and all thair teams* <br>
+- https://www.youtube.com/@ClearCode
+*"TILED" projet and all thair teams* <br>
+- https://www.mapeditor.org/
   
 ## Game includes:
  - Start window
@@ -12,7 +18,8 @@
  - Settings window
   ![Settings](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_settings.jpg) 
  - Gameplay 
-  ![Gameplay](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_level.jpg)
+  ![Gameplay](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_level_1.jpg)
+  ![Gameplay](https://github.com/Torin1Mars/Curious-racoon/blob/main/Preview_level_2.jpg)
 
   ## Additional: 
  <ul>

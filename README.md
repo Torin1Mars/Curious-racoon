@@ -5,10 +5,10 @@
 </ul>
 
 ## Special thanks to: <br>
-*"Clear Code" projet and all thair teams* <br>
--https://www.youtube.com/@ClearCode
-*"TILED" projet and all thair teams* <br>
--https://www.mapeditor.org/
+*"Clear Code" projet and all thair teams:* <br>
+-https://www.youtube.com/@ClearCode <br>
+*"TILED" projet and all thair teams:* <br>
+-https://www.mapeditor.org <br>
   
 ## Game includes:
  - Start window
